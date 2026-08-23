@@ -219,11 +219,13 @@ begin
     return true;
   end if;
 
-  insert into public.geo_rate_limit (ip_hash, day, count)
+  -- El alias es obligatorio: dentro de ON CONFLICT DO UPDATE la tabla se
+  -- referencia por su nombre o alias, nunca cualificada con el esquema.
+  insert into public.geo_rate_limit as rl (ip_hash, day, count)
        values (p_ip_hash, current_date, 1)
   on conflict (ip_hash, day)
-    do update set count = public.geo_rate_limit.count + 1
-    returning count into v_count;
+    do update set count = rl.count + 1
+    returning rl.count into v_count;
 
   return v_count <= v_limit;
 end;
@@ -338,6 +340,16 @@ revoke all on function public.geo_get_report(uuid)           from public, anon, 
 grant execute on function public.geo_get_check(uuid)  to anon, authenticated;
 grant execute on function public.geo_get_report(uuid) to anon, authenticated;
 
+-- REVOKE ... FROM public quita también el permiso que service_role heredaba,
+-- así que hay que devolvérselo: sin esto las Edge Functions no pueden ni
+-- consultar el interruptor y todo devuelve error de permisos.
+grant execute on function public.geo_config_value(text, jsonb) to service_role;
+grant execute on function public.geo_is_enabled()              to service_role;
+grant execute on function public.geo_find_cached(text)         to service_role;
+grant execute on function public.geo_touch_rate_limit(text)    to service_role;
+grant execute on function public.geo_get_check(uuid)           to service_role;
+grant execute on function public.geo_get_report(uuid)          to service_role;
+
 -- ============================================================
 -- Purga de cuerpos de respuesta
 --
@@ -368,3 +380,4 @@ as $$
 $$;
 
 revoke all on function public.geo_prune_responses(int) from public, anon, authenticated;
+grant execute on function public.geo_prune_responses(int) to service_role;
