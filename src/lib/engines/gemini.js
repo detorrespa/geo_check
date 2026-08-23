@@ -10,9 +10,14 @@
  */
 const BASE_URL = 'https://generativelanguage.googleapis.com/v1beta/models';
 
-// Retirados para cuentas nuevas: devuelven 404.
-const DEPRECATED = ['gemini-2.0-flash'];
-const FALLBACK_MODELS = ['gemini-2.5-flash', 'gemini-2.5-flash-lite', 'gemini-1.5-flash'];
+// Retirados para cuentas nuevas: devuelven 404 aunque ListModels los liste.
+// Comprobado contra la API en agosto de 2026; conviene revisarlo de vez en
+// cuando, porque Google retira modelos sin quitarlos del listado.
+const DEPRECATED = ['gemini-1.5-flash', 'gemini-2.0-flash', 'gemini-2.5-flash'];
+const FALLBACK_MODELS = ['gemini-3.6-flash', 'gemini-flash-latest', 'gemini-3.5-flash-lite'];
+
+// Host del redirector de Google en las citas: nunca es la fuente real.
+const REDIRECT_HOST = 'vertexaisearch.cloud.google.com';
 
 export const id = 'google';
 export const label = 'Google (Gemini con búsqueda)';
@@ -29,17 +34,34 @@ function timeoutMs() {
   return Number(process.env.ENGINE_TIMEOUT_MS || 45000);
 }
 
-function modelChain() {
+export function modelChain() {
   const preferred = (process.env.GOOGLE_MODEL || '').trim();
+  // Un modelo retirado en la configuración se sustituye por el primero de la
+  // cadena, nunca por otro nombre fijo: así al retirar uno basta con moverlo
+  // de FALLBACK_MODELS a DEPRECATED y no queda un destino muerto.
   const normalized = DEPRECATED.some((d) => preferred === d || preferred.startsWith(`${d}-`))
-    ? 'gemini-2.5-flash'
+    ? FALLBACK_MODELS[0]
     : preferred;
   return [...new Set([normalized, ...FALLBACK_MODELS].filter(Boolean))];
 }
 
-function domainOf(uri) {
+const DOMAIN_SHAPE = /^[a-z0-9-]+(\.[a-z0-9-]+)+$/i;
+
+/**
+ * Dominio real de una cita.
+ *
+ * Ojo con `web.uri`: Google no devuelve la URL de la fuente sino un
+ * redirector propio (`vertexaisearch.cloud.google.com/grounding-api-redirect/…`),
+ * así que parsearlo daría ese mismo host para las once fuentes de una
+ * respuesta. El dominio bueno viene en `web.title`.
+ */
+export function sourceDomain(web = {}) {
+  const title = (web.title || '').trim().toLowerCase();
+  if (DOMAIN_SHAPE.test(title)) return title;
+
   try {
-    return new URL(uri).hostname.toLowerCase();
+    const host = new URL(web.uri || '').hostname.toLowerCase();
+    return host === REDIRECT_HOST ? '' : host;
   } catch {
     return '';
   }
@@ -58,7 +80,7 @@ function parse(data) {
 
   const sources = [];
   for (const chunk of candidate?.groundingMetadata?.groundingChunks || []) {
-    const domain = domainOf(chunk?.web?.uri || '');
+    const domain = sourceDomain(chunk?.web);
     if (domain && !sources.includes(domain)) sources.push(domain);
   }
 
@@ -113,15 +135,20 @@ export async function ask(question) {
   }
 
   // 2) Sin búsqueda, probando la cadena de modelos.
-  let lastError = '';
+  //
+  // Se guarda el error del PRIMER modelo, no el del último: el último de la
+  // cadena es el más viejo y su "modelo no encontrado" tapa la causa real.
+  // Depurar por qué falla el modelo que sí pediste cuesta media hora si el
+  // mensaje habla de otro.
+  let firstError = '';
   for (const modelId of models) {
     try {
       const res = await post(modelId, body, key);
       const parsed = res.ok ? parse(res.data) : null;
       if (parsed?.text) return done(parsed, modelId, false);
-      lastError = parsed?.apiError || res.data?.error?.message || `HTTP ${res.status}`;
+      firstError ||= `${modelId}: ${parsed?.apiError || res.data?.error?.message || `HTTP ${res.status}`}`;
     } catch (error) {
-      lastError = String(error.message || error);
+      firstError ||= `${modelId}: ${error.message || error}`;
     }
   }
 
@@ -131,7 +158,7 @@ export async function ask(question) {
     text: '',
     sources: [],
     ok: false,
-    error: lastError || 'Gemini no disponible: revisa GOOGLE_API_KEY y cuota',
+    error: firstError || 'Gemini no disponible: revisa GOOGLE_API_KEY y cuota',
     latencyMs: Date.now() - started,
     grounded: false,
   };
