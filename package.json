@@ -1,0 +1,14 @@
+{
+  "name": "geo-check",
+  "version": "0.1.0",
+  "private": true,
+  "description": "GEO Check · Nektiu — cuánto aparece una marca en motores generativos cuando la nombran frente a cuando no",
+  "type": "module",
+  "scripts": {
+    "check": "node --env-file-if-exists=.env scripts/run-check.js",
+    "test": "node --test"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}
