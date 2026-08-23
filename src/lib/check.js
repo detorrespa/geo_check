@@ -26,19 +26,22 @@ async function pool(items, limit, worker) {
   return results;
 }
 
-export async function runCheck({
+/**
+ * Ejecuta una lista de preguntas ya construida.
+ *
+ * El worker de la Edge Function entra por aquí: las preguntas se calcularon y
+ * se guardaron al crear el check, así que la barra de progreso puede
+ * enseñarlas antes de que exista ninguna respuesta. Volver a generarlas en el
+ * worker las haría distintas de las que el navegador ya está mostrando.
+ */
+export async function runQuestions({
   brand,
-  domain = '',
-  sector,
+  questions,
   competitors = [],
   engines = DEFAULT_ENGINES,
-  perBlock,
   concurrency = 6,
   onProgress,
 }) {
-  const startedAt = Date.now();
-  const built = buildQuestions({ brand, sector, competitors, perBlock });
-  const questions = allQuestions(built);
   const rivals = competitors.map((c) => (c || '').trim()).filter(Boolean).slice(0, 3);
 
   const tasks = [];
@@ -72,15 +75,34 @@ export async function runCheck({
     };
 
     done += 1;
-    onProgress?.({ done, total: tasks.length, record });
+    await onProgress?.({ done, total: tasks.length, record });
     return record;
   });
+
+  return responses;
+}
+
+export async function runCheck({
+  brand,
+  domain = '',
+  sector,
+  competitors = [],
+  engines = DEFAULT_ENGINES,
+  perBlock,
+  concurrency = 6,
+  onProgress,
+}) {
+  const startedAt = Date.now();
+  const built = buildQuestions({ brand, sector, competitors, perBlock });
+  const questions = allQuestions(built);
+
+  const responses = await runQuestions({ brand, questions, competitors, engines, concurrency, onProgress });
 
   return {
     brand,
     domain,
     sector,
-    competitors: rivals,
+    competitors: competitors.map((c) => (c || '').trim()).filter(Boolean).slice(0, 3),
     engines,
     questions,
     responses,

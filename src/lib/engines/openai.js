@@ -4,26 +4,28 @@
  * El motor que la persona al otro lado usa personalmente, que es parte de por
  * qué la cifra le resulta creíble.
  */
+import { env, envNumber } from '../env.js';
+
 const API_URL = 'https://api.openai.com/v1/chat/completions';
 
 export const id = 'openai';
 export const label = 'ChatGPT (OpenAI)';
 
 export function configured() {
-  return Boolean(process.env.OPENAI_API_KEY);
+  return Boolean(env('OPENAI_API_KEY'));
 }
 
 function model() {
-  return process.env.OPENAI_MODEL || 'gpt-4o-mini';
+  return env('OPENAI_MODEL', 'gpt-4o-mini');
 }
 
 function timeoutMs() {
-  return Number(process.env.ENGINE_TIMEOUT_MS || 45000);
+  return envNumber('ENGINE_TIMEOUT_MS', 45000);
 }
 
 export async function ask(question) {
   const started = Date.now();
-  const key = process.env.OPENAI_API_KEY;
+  const key = env('OPENAI_API_KEY');
   if (!key) {
     return { engine: id, model: model(), text: '', sources: [], ok: false, error: 'OPENAI_API_KEY no configurada', latencyMs: 0 };
   }

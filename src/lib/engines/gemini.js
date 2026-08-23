@@ -8,6 +8,8 @@
  * No es el AI Overview del buscador: Google no ofrece API para eso. En el
  * informe se llama «Google (Gemini con búsqueda)» y no de otra manera.
  */
+import { env, envNumber, envFlag } from '../env.js';
+
 const BASE_URL = 'https://generativelanguage.googleapis.com/v1beta/models';
 
 // Retirados para cuentas nuevas: devuelven 404 aunque ListModels los liste.
@@ -23,19 +25,19 @@ export const id = 'google';
 export const label = 'Google (Gemini con búsqueda)';
 
 export function configured() {
-  return Boolean(process.env.GOOGLE_API_KEY);
+  return Boolean(env('GOOGLE_API_KEY'));
 }
 
 function useGrounding() {
-  return (process.env.GEMINI_USE_GROUNDING || 'true').toLowerCase() !== 'false';
+  return envFlag('GEMINI_USE_GROUNDING', true);
 }
 
 function timeoutMs() {
-  return Number(process.env.ENGINE_TIMEOUT_MS || 45000);
+  return envNumber('ENGINE_TIMEOUT_MS', 45000);
 }
 
 export function modelChain() {
-  const preferred = (process.env.GOOGLE_MODEL || '').trim();
+  const preferred = env('GOOGLE_MODEL').trim();
   // Un modelo retirado en la configuración se sustituye por el primero de la
   // cadena, nunca por otro nombre fijo: así al retirar uno basta con moverlo
   // de FALLBACK_MODELS a DEPRECATED y no queda un destino muerto.
@@ -99,7 +101,7 @@ async function post(modelId, body, key) {
 
 export async function ask(question) {
   const started = Date.now();
-  const key = process.env.GOOGLE_API_KEY;
+  const key = env('GOOGLE_API_KEY');
   const models = modelChain();
 
   if (!key) {
