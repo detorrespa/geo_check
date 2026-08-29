@@ -10,6 +10,7 @@
 import { preflight, json, fail } from '../_shared/http.ts';
 import { serviceClient } from '../_shared/db.ts';
 import { isPlausibleEmail } from '../../../src/lib/domain.js';
+import { sendReportEmail } from '../../../src/lib/close.js';
 
 Deno.serve(async (request: Request) => {
   const pre = preflight(request);
@@ -45,7 +46,9 @@ Deno.serve(async (request: Request) => {
 
   const { data: check, error: checkError } = await db
     .from('geo_checks')
-    .select('id, status')
+    .select(
+      'id, status, brand_name, sector, mentions_explicit, answers_explicit, freq_explicit, mentions_discovery, answers_discovery, freq_discovery',
+    )
     .eq('id', checkId)
     .single();
 
@@ -70,5 +73,29 @@ Deno.serve(async (request: Request) => {
 
   if (insertError) return fail(request, 'db_error', insertError.message, 500);
 
-  return json(request, { ok: true, checkId });
+  // El lead ya está guardado: si Resend falla, la persona sigue viendo el
+  // informe en pantalla. El correo no puede ser la única copia.
+  let mailed = false;
+  try {
+    const result = await sendReportEmail({
+      to: email,
+      brand: check.brand_name,
+      sector: check.sector,
+      explicit: {
+        mentions: check.mentions_explicit,
+        answers: check.answers_explicit,
+        frequency: check.freq_explicit,
+      },
+      discovery: {
+        mentions: check.mentions_discovery,
+        answers: check.answers_discovery,
+        frequency: check.freq_discovery,
+      },
+    });
+    mailed = Boolean(result.sent);
+  } catch (error) {
+    console.error('No se pudo enviar el informe:', (error as Error).message);
+  }
+
+  return json(request, { ok: true, checkId, mailed });
 });

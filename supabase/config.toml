@@ -1,0 +1,14 @@
+# Proyecto: ulukwchahodwepyrnpvd
+# El navegador llama a create-check y save-lead con la clave publicable,
+# sin JWT de usuario. Si verify_jwt queda en true (el valor por defecto),
+# esas dos funciones responden 401 y el formulario no arranca.
+project_id = "geo_check"
+
+[functions.create-check]
+verify_jwt = false
+
+[functions.run-check]
+verify_jwt = false
+
+[functions.save-lead]
+verify_jwt = false

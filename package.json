@@ -5,8 +5,14 @@
   "description": "GEO Check · Nektiu — cuánto aparece una marca en motores generativos cuando la nombran frente a cuando no",
   "type": "module",
   "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
     "check": "node --env-file-if-exists=.env scripts/run-check.js",
     "test": "node --test"
+  },
+  "devDependencies": {
+    "vite": "^7.1.3"
   },
   "engines": {
     "node": ">=20"

@@ -1,6 +1,6 @@
 # Despliegue de la fase 2
 
-Proyecto: `orrevxnmrxskswgtfnmr` · el mismo que usará el Scan, con tablas
+Proyecto: `ulukwchahodwepyrnpvd` · el mismo que usará el Scan, con tablas
 prefijadas `geo_`.
 
 > **Antes de nada, comprueba la región** en Project Settings → General. Tiene
@@ -17,7 +17,7 @@ así que se puede volver a ejecutar sin romper nada.
 
 ```bash
 supabase login
-supabase link --project-ref orrevxnmrxskswgtfnmr
+supabase link --project-ref ulukwchahodwepyrnpvd
 ```
 
 ```bash
@@ -40,13 +40,13 @@ supabase functions deploy create-check run-check save-lead
 ## 4 · Comprobación
 
 ```bash
-curl -X POST "https://orrevxnmrxskswgtfnmr.supabase.co/functions/v1/create-check" -H "apikey: <publishable>" -H "content-type: application/json" -d '{"brand":"Freshly Cosmetics","sector":"belleza","domain":"freshlycosmetics.es","competitors":["Sesderma","Isdin"]}'
+curl -X POST "https://ulukwchahodwepyrnpvd.supabase.co/functions/v1/create-check" -H "apikey: <publishable>" -H "content-type: application/json" -d '{"brand":"Freshly Cosmetics","sector":"belleza","domain":"freshlycosmetics.es","competitors":["Sesderma","Isdin"]}'
 ```
 
 Devuelve un `id` al instante. El progreso se consulta con la RPC pública:
 
 ```bash
-curl -X POST "https://orrevxnmrxskswgtfnmr.supabase.co/rest/v1/rpc/geo_get_check" -H "apikey: <publishable>" -H "content-type: application/json" -d '{"p_id":"<id>"}'
+curl -X POST "https://ulukwchahodwepyrnpvd.supabase.co/rest/v1/rpc/geo_get_check" -H "apikey: <publishable>" -H "content-type: application/json" -d '{"p_id":"<id>"}'
 ```
 
 ## Cómo está montado

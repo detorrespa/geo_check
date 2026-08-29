@@ -13,9 +13,9 @@ Propuesta completa y decisiones: [`docs/PROPUESTA_GEO_Check.md`](docs/PROPUESTA_
 
 ## Estado
 
-**Fase 1 · núcleo medible.** Sin interfaz, sin base de datos, sin despliegue.
-Lo que hay sirve para responder a la única pregunta que importa antes de
-construir nada más: ¿aparece la brecha?
+**Fase 3 hecha y los diez sectores escritos.** El dominio de la marca se
+comprueba. El informe se imprime desde el navegador y, si Resend está
+configurado, se envía al guardar el lead. El PDF de servidor no está.
 
 ```
 src/lib/
@@ -34,9 +34,12 @@ Cero dependencias de terceros: Node 20+ trae `fetch` y `node:test`.
 
 ```bash
 cp .env.example .env
+npm install
+npm run dev
 ```
 
-Rellena `OPENAI_API_KEY` y `GOOGLE_API_KEY`, y lanza un check:
+La web queda en `http://localhost:5173`. Rellena también `OPENAI_API_KEY` y
+`GOOGLE_API_KEY` si quieres lanzar un check desde consola:
 
 ```bash
 npm run check -- --marca "Freshly Cosmetics" --sector belleza --competidores "Sesderma,Isdin"
@@ -56,6 +59,27 @@ Pruebas:
 ```bash
 npm test
 ```
+
+## Publicar en geo.nektiu.com
+
+Cloudflare Pages. El worker sigue en Supabase; aquí solo se sube el front.
+
+1. En Cloudflare: **Workers & Pages → Create → Pages → Connect to Git**.
+2. Repo `geo_check`, rama `main`.
+3. Ajustes de build:
+   - Framework: Vite
+   - Build command: `npm run build`
+   - Output directory: `dist`
+   - Node: `20` o superior
+4. Variables (Production):
+   - `VITE_SUPABASE_URL` = `https://ulukwchahodwepyrnpvd.supabase.co`
+   - `VITE_SUPABASE_PUBLISHABLE_KEY` = la clave publicable
+5. **Custom domains** → `geo.nektiu.com`. Cloudflare te da el CNAME;
+   añádelo en el DNS de `nektiu.com`.
+6. En Supabase → Edge Functions → Secrets:
+   `ALLOWED_ORIGINS` = `https://geo.nektiu.com,http://localhost:5173`
+
+Sin el paso 6, cualquier web podría lanzar checks a tu costa.
 
 ## Tres decisiones que conviene conocer
 

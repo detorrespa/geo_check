@@ -34,6 +34,44 @@ export function isValidDomain(input) {
 }
 
 /**
+ * ¿Responde esa web? Evita gastar un check en marcas inventadas.
+ *
+ * Cualquier código HTTP cuenta: 403 o 404 ya demuestran que el dominio
+ * existe. Solo se rechaza si no hay red ni DNS. `fetchImpl` es para tests.
+ */
+export async function domainExists(input, fetchImpl = globalThis.fetch) {
+  const host = normalizeDomain(input);
+  if (!host || typeof fetchImpl !== 'function') return false;
+
+  for (const protocol of ['https', 'http']) {
+    if (await reachable(`${protocol}://${host}`, fetchImpl)) return true;
+  }
+  return false;
+}
+
+async function reachable(url, fetchImpl) {
+  try {
+    const response = await fetchImpl(url, {
+      method: 'HEAD',
+      redirect: 'follow',
+      signal: AbortSignal.timeout(3500),
+    });
+    return Number(response?.status) > 0;
+  } catch {
+    try {
+      const response = await fetchImpl(url, {
+        method: 'GET',
+        redirect: 'follow',
+        signal: AbortSignal.timeout(3500),
+      });
+      return Number(response?.status) > 0;
+    } catch {
+      return false;
+    }
+  }
+}
+
+/**
  * Correo con pinta de correo. Deliberadamente permisivo: el brief pide
  * recomendar el correo profesional, no filtrarlo. Mucha pyme española usa
  * Gmail y un filtro estricto cuesta leads legítimos.

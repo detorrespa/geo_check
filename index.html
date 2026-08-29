@@ -1,0 +1,145 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>GEO Check · Nektiu</title>
+    <meta
+      name="description"
+      content="Cuánto aparece tu marca en los motores generativos cuando te nombran, frente a cuando el cliente describe lo que necesita sin nombrar a nadie."
+    />
+    <link rel="stylesheet" href="/src/styles/app.css" />
+  </head>
+  <body>
+    <header>
+      <div class="wrap brand-row">
+        <p class="logo">GEO <span>Check</span></p>
+        <p class="nektiu">Nektiu</p>
+      </div>
+    </header>
+
+    <main class="wrap">
+      <section id="screen-form">
+        <h1>¿Apareces cuando no te nombran?</h1>
+        <p class="lede">
+          Dos cifras: cuánto te mencionan ChatGPT y Google cuando la pregunta lleva tu marca,
+          y cuánto cuando el cliente solo describe lo que necesita.
+        </p>
+        <p id="form-error" class="error hidden"></p>
+        <form id="form-check" class="card" novalidate>
+          <div class="field">
+            <label for="brand">Marca</label>
+            <input id="brand" name="brand" maxlength="80" required autocomplete="organization" />
+          </div>
+          <div class="field">
+            <label for="domain">Web de la marca</label>
+            <input id="domain" name="domain" placeholder="tu-marca.es" inputmode="url" autocomplete="url" required />
+            <span class="hint">Tiene que ser una web real. También evita repetir el análisis en 30 días.</span>
+          </div>
+          <div class="field">
+            <label for="sector">Sector</label>
+            <select id="sector" name="sector" required></select>
+          </div>
+          <div class="field">
+            <label>Competidores (hasta tres, opcional)</label>
+            <div class="rivals">
+              <input name="rival1" maxlength="80" />
+              <input name="rival2" maxlength="80" />
+              <input name="rival3" maxlength="80" />
+            </div>
+          </div>
+          <button class="btn" type="submit" id="btn-check">Analizar mi marca</button>
+        </form>
+      </section>
+
+      <section id="screen-progress" class="hidden">
+        <h1>Preguntando a los motores</h1>
+        <p class="lede">ChatGPT y Google (Gemini con búsqueda). Puedes cerrar la pestaña: al volver, el análisis sigue.</p>
+        <div class="card">
+          <div class="progress-meta">
+            <span id="progress-label">0 de 0</span>
+            <span id="progress-brand"></span>
+          </div>
+          <div class="bar" aria-hidden="true"><i id="progress-bar"></i></div>
+          <ol class="questions" id="question-list"></ol>
+        </div>
+      </section>
+
+      <section id="screen-result" class="hidden">
+        <h1 id="result-title">Tu marca, en dos cifras</h1>
+        <p class="lede" id="result-lede"></p>
+        <p id="result-error" class="error hidden"></p>
+        <div class="figures">
+          <article class="figure">
+            <h2>Cuando te nombran</h2>
+            <p class="pct" id="pct-explicit">—</p>
+            <p class="frac" id="frac-explicit"></p>
+          </article>
+          <article class="figure gap">
+            <h2>Cuando NO te nombran</h2>
+            <p class="pct" id="pct-discovery">—</p>
+            <p class="frac" id="frac-discovery"></p>
+          </article>
+        </div>
+
+        <div id="wall" class="card wall hidden">
+          <h2>El detalle, a cambio de un correo</h2>
+          <p class="lede">Sin teléfono. Una sola vez. Ahí ves qué preguntamos y quién sale en tu lugar.</p>
+          <p id="wall-error" class="error hidden"></p>
+          <form id="form-lead" novalidate>
+            <div class="field">
+              <label for="email">Correo</label>
+              <input id="email" name="email" type="email" required autocomplete="email" />
+              <span class="hint">Recomendamos el profesional, pero Gmail también vale.</span>
+            </div>
+            <div class="field">
+              <label for="company">Empresa</label>
+              <input id="company" name="company" maxlength="160" autocomplete="organization" />
+            </div>
+            <div class="field">
+              <label for="role">Cargo</label>
+              <input id="role" name="role" maxlength="120" autocomplete="organization-title" />
+            </div>
+            <label class="consent">
+              <input id="consent" name="consent" type="checkbox" />
+              <span id="consent-text"></span>
+            </label>
+            <button class="btn" type="submit" id="btn-lead">Ver el informe</button>
+          </form>
+        </div>
+
+        <div id="report" class="hidden">
+          <div class="card report-block">
+            <h3>Aparecen en tu lugar</h3>
+            <ul class="report-list" id="rival-list"></ul>
+          </div>
+          <div class="card report-block">
+            <h3>Por motor</h3>
+            <ul class="report-list" id="engine-list"></ul>
+          </div>
+          <p class="lede">
+            Esto no es un diagnóstico. Si quieres saber por qué no apareces y qué cambiar,
+            reserva 30 minutos.
+          </p>
+          <p>
+            <a class="btn" id="agenda-link" href="https://calendly.com/adetorres/reunion-nektiu" target="_blank" rel="noreferrer">
+              Reservar 30 minutos
+            </a>
+          </p>
+          <button class="btn btn-secondary no-print" type="button" id="btn-print">Imprimir o guardar en PDF</button>
+        </div>
+      </section>
+    </main>
+
+    <footer>
+      <div class="wrap">
+        <p>
+          <a href="/legal.html">Privacidad y aviso legal</a>
+          · El análisis consulta modelos de OpenAI y Google.
+        </p>
+      </div>
+    </footer>
+
+    <script type="module" src="/src/web/main.js"></script>
+  </body>
+</html>

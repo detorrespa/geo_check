@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { normalizeDomain, isValidDomain, isPlausibleEmail } from '../src/lib/domain.js';
+import { normalizeDomain, isValidDomain, isPlausibleEmail, domainExists } from '../src/lib/domain.js';
 
 test('todas las formas de escribir el mismo dominio dan la misma clave', () => {
   // Si esto falla, dos personas de la misma empresa gastan dos ejecuciones
@@ -38,6 +38,32 @@ test('el correo se valida con manga ancha, a propósito', () => {
   assert.equal(isPlausibleEmail('ana@gmail.com'), true);
   assert.equal(isPlausibleEmail('ana.lopez@marca.es'), true);
   assert.equal(isPlausibleEmail('ana@sub.marca.co.uk'), true);
+});
+
+test('un dominio inventado no se consulta: se rechaza antes', async () => {
+  const calls = [];
+  const fetchImpl = async (url) => {
+    calls.push(url);
+    return { status: 200 };
+  };
+  assert.equal(await domainExists('marca', fetchImpl), false);
+  assert.deepEqual(calls, []);
+});
+
+test('acepta el dominio si la web responde, aunque sea un 403', async () => {
+  const fetchImpl = async () => ({ status: 403 });
+  assert.equal(await domainExists('marca.es', fetchImpl), true);
+});
+
+test('prueba https y luego http, y tira la toalla si no hay red', async () => {
+  const tried = [];
+  const fetchImpl = async (url) => {
+    tried.push(url);
+    throw new Error('offline');
+  };
+  assert.equal(await domainExists('marca.es', fetchImpl), false);
+  assert.ok(tried.includes('https://marca.es'));
+  assert.ok(tried.includes('http://marca.es'));
 });
 
 test('pero rechaza lo que no llegaría a ningún buzón', () => {

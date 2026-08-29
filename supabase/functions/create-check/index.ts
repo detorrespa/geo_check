@@ -12,7 +12,7 @@ import { preflight, json, fail } from '../_shared/http.ts';
 import { serviceClient } from '../_shared/db.ts';
 import { buildQuestions, allQuestions } from '../../../src/lib/questions.js';
 import { SECTOR_LABELS, availableSectors } from '../../../src/lib/sectors/index.js';
-import { normalizeDomain } from '../../../src/lib/domain.js';
+import { domainExists, normalizeDomain } from '../../../src/lib/domain.js';
 import { clientIp, hashIp } from '../../../src/lib/privacy.js';
 import { DEFAULT_ENGINES } from '../../../src/lib/engines/index.js';
 
@@ -47,6 +47,9 @@ Deno.serve(async (request: Request) => {
   if (!availableSectors().includes(sector)) {
     return fail(request, 'sector_pendiente', `«${SECTOR_LABELS[sector]}» aún no está disponible.`, 503);
   }
+  if (!domain) {
+    return fail(request, 'bad_domain', 'Indica la web de la marca.');
+  }
 
   const db = serviceClient();
 
@@ -59,9 +62,13 @@ Deno.serve(async (request: Request) => {
 
   // 2 · Caché de 30 días por dominio. Si otra persona de la misma empresa ya
   //     lo pidió, se le sirve aquel y no se gasta ni una llamada.
-  if (domain) {
-    const { data: cachedId } = await db.rpc('geo_find_cached', { p_domain: domain });
-    if (cachedId) return json(request, { id: cachedId, cached: true });
+  const { data: cachedId } = await db.rpc('geo_find_cached', { p_domain: domain });
+  if (cachedId) return json(request, { id: cachedId, cached: true });
+
+  // 2b · La web tiene que existir. Después de la caché: si ya analizamos
+  //      ese dominio, no hace falta volver a golpearlo.
+  if (!(await domainExists(domain))) {
+    return fail(request, 'unknown_domain', 'No hemos podido abrir esa web. Revisa el dominio.');
   }
 
   // 3 · Límite por IP. Va después de la caché a propósito: servir un

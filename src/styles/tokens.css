@@ -1,0 +1,16 @@
+:root {
+  --navy: #1a3c5e;
+  --navy-deep: #12283f;
+  --orange: #e8741a;
+  --teal: #2e86ab;
+  --paper: #f7f4ee;
+  --card: #fffdf8;
+  --ink: #1c2430;
+  --muted: #5c6b7a;
+  --line: #d9d2c5;
+  --ok: #2f7d4a;
+  --fail: #b42318;
+  --shadow: 0 12px 40px rgba(18, 40, 63, 0.08);
+  --radius: 16px;
+  --font: "Segoe UI", system-ui, sans-serif;
+}

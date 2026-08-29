@@ -93,11 +93,18 @@ test('cada pregunta lleva su bloque y no se mezclan', () => {
   assert.equal(allQuestions(built).length, built.explicit.length + built.discovery.length);
 });
 
-test('un sector sin plantillas falla con un mensaje que lo explica', () => {
-  assert.throws(() => getSector('moda'), /aún no tiene plantillas/);
+test('un sector inventado falla con un mensaje que lo explica', () => {
   assert.throws(() => getSector('inventado'), /Sector desconocido/);
 });
 
-test('el catálogo declara los diez sectores del formulario', () => {
-  assert.equal(Object.keys(SECTOR_LABELS).length, 10);
+test('el catálogo declara los diez sectores y todos tienen plantillas', () => {
+  const ids = Object.keys(SECTOR_LABELS);
+  assert.equal(ids.length, 10);
+  assert.deepEqual([...availableSectors()].sort(), [...ids].sort());
+  for (const sector of ids) {
+    const built = buildQuestions({ brand: 'Nektiu', sector, competitors: ['Sesderma', 'Isdin'] });
+    assert.equal(built.explicit.length, 11, `[${sector}] explícito incompleto`);
+    assert.equal(built.discovery.length, 11, `[${sector}] discovery incompleto`);
+    assert.equal(built.warnings.length, 0, `[${sector}] ${built.warnings.join(' / ')}`);
+  }
 });
